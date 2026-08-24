@@ -1,0 +1,73 @@
+---
+- name: "Set command args"
+  ansible.builtin.set_fact:
+    warpgate_command_args:
+      - "unattended-setup"
+      - "--data-path {{ warpgate_data_path }}"
+      - "--http-port {{ warpgate_http_port }}"
+      - "--admin-password {{ warpgate_admin_password }}"
+      - "{{ '--ssh-port ' + warpgate_ssh_port | ansible.builtin.string if warpgate_ssh_enabled else '' }}"
+      - "--database-url {{ warpgate_database_url }}"
+      - "{{ '--mysql-port ' + warpgate_mysql_port | ansible.builtin.string if warpgate_mysql_enabled else '' }}"
+      - "{{ '--postgres-port ' + warpgate_postgres_port | ansible.builtin.string if warpgate_postgres_enabled else '' }}"
+      - "{{ '--record-sessions' if warpgate_record_sessions else '' }}"
+      - "--external-host {{ warpgate_external_host }}"
+
+- name: "Check if initial configuration already exists"
+  ansible.builtin.stat:
+    path: "{{ warpgate_docker_host_data_path }}/warpgate.yaml"
+  register: warpgate_docker_config_stat
+
+- name: "Remove leftover setup container from a previous failed run"
+  community.docker.docker_container:
+    name: "{{ warpgate_docker_container_name }}-setup"
+    state: "absent"
+  when: not warpgate_docker_config_stat.stat.exists and not ansible_check_mode
+
+- name: "Create initial configuration"
+  community.docker.docker_container:
+    name: "{{ warpgate_docker_container_name }}-setup"
+    image: "{{ warpgate_docker_image }}:{{ warpgate_docker_image_tag }}"
+    command: "{{ warpgate_command_args | join(' ') }}"
+    volumes:
+      - "{{ warpgate_docker_host_data_path }}:/data"
+    detach: false
+    cleanup: true
+    state: "started"
+  when: not warpgate_docker_config_stat.stat.exists and not ansible_check_mode
+
+- name: "Update config file"
+  ansible.builtin.template:
+    src: "etc/warpgate/warpgate.yaml.j2"
+    dest: "{{ warpgate_docker_host_data_path }}/warpgate.yaml"
+    owner: "{{ warpgate_system_user }}"
+    group: "{{ warpgate_system_group }}"
+    mode: "0600"
+  notify: "Restart Warpgate Docker container"
+
+- name: "Compute published ports"
+  ansible.builtin.set_fact:
+    warpgate_docker_ports: >-
+      {{
+        ([warpgate_http_port ~ ':' ~ warpgate_http_port])
+        + (warpgate_ssh_enabled | ternary([warpgate_ssh_port ~ ':' ~ warpgate_ssh_port], []))
+        + (warpgate_mysql_enabled | ternary([warpgate_mysql_port ~ ':' ~ warpgate_mysql_port], []))
+        + (warpgate_postgres_enabled | ternary([warpgate_postgres_port ~ ':' ~ warpgate_postgres_port], []))
+        + (warpgate_kubernetes_enabled | ternary([warpgate_kubernetes_port ~ ':' ~ warpgate_kubernetes_port], []))
+        + warpgate_docker_extra_ports
+      }}
+  when: warpgate_docker_publish_ports
+
+- name: "Ensure Warpgate container is running"
+  community.docker.docker_container:
+    name: "{{ warpgate_docker_container_name }}"
+    image: "{{ warpgate_docker_image }}:{{ warpgate_docker_image_tag }}"
+    state: "{{ warpgate_service_state }}"
+    restart_policy: "{{ warpgate_docker_restart_policy if warpgate_service_enabled else 'no' }}"
+    ports: "{{ warpgate_docker_ports if warpgate_docker_publish_ports else omit }}"
+    volumes: "{{ [warpgate_docker_host_data_path ~ ':/data'] + warpgate_docker_extra_volumes }}"
+    env: "{{ warpgate_docker_extra_env if warpgate_docker_extra_env | length > 0 else omit }}"
+    network_mode: "{{ warpgate_docker_network_mode | default(omit, true) }}"
+    etc_hosts: "{{ warpgate_docker_extra_hosts if warpgate_docker_extra_hosts | length > 0 else omit }}"
+    log_driver: "{{ warpgate_docker_log_driver | default(omit, true) }}"
+  when: not ansible_check_mode

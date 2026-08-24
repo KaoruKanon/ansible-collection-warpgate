@@ -9,3 +9,10 @@
 - name: "Reload Systemd"
   ansible.builtin.systemd_service:
     daemon_reload: true
+
+- name: "Restart Warpgate Docker container"
+  community.docker.docker_container:
+    name: "{{ warpgate_docker_container_name }}"
+    state: "started"
+    restart: true
+  when: warpgate_service_state == "started" and warpgate_service_enabled

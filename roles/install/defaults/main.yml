@@ -18,6 +18,15 @@ warpgate_system_group: "warpgate"
 # warpgate version to install
 warpgate_version: 0.27.1
 
+# @var warpgate_install_method
+# @var warpgate_install_method:type: string
+# @var warpgate_install_method:description: >
+# How warpgate is installed and run: "binary" installs the standalone
+# release binary and manages it via systemd, "docker" runs the official
+# Warpgate container image via the Docker Engine (see the "Docker"
+# variables below).
+warpgate_install_method: "binary"
+
 # @var warpgate_service_state
 # @var warpgate_service_state:type: string
 # @var warpgate_service_state:description: >
@@ -34,8 +43,13 @@ warpgate_service_enabled: true
 # @var warpgate_data_path
 # @var warpgate_data_path:type: string
 # @var warpgate_data_path:description: >
-# Warpgate data path
-warpgate_data_path: "/var/lib/warpgate"
+# Warpgate data path: config file, SQLite database (if used), TLS
+# certificates, SSH host keys and session recordings all live under it.
+# When warpgate_install_method is "docker" this is the path *inside the
+# container* (fixed to /data by the official image) — use
+# warpgate_docker_host_data_path to control where that data actually
+# lives on the host.
+warpgate_data_path: "{{ '/data' if warpgate_install_method == 'docker' else '/var/lib/warpgate' }}"
 
 # @var warpgate_config_file_path
 # @var warpgate_config_file_path:type: string
@@ -66,11 +80,71 @@ warpgate_ssh_port: 2222
 # @var warpgate_admin_password:description: >
 # Warpgate admin password
 
+# @var warpgate_database_backend
+# @var warpgate_database_backend:type: string
+# @var warpgate_database_backend:description: >
+# Backend datastore used by warpgate itself to store its own state
+# (users, roles, targets, sessions, ...): "sqlite" or "postgres". This is
+# unrelated to warpgate_postgres_enabled below, which only controls
+# whether warpgate exposes a PostgreSQL-protocol *listener* used to proxy
+# connections to PostgreSQL targets.
+warpgate_database_backend: "sqlite"
+
+# @var warpgate_database_postgres_host
+# @var warpgate_database_postgres_host:type: string
+# @var warpgate_database_postgres_host:description: >
+# Hostname of the PostgreSQL server used as warpgate's own database
+# (only used when warpgate_database_backend is "postgres")
+warpgate_database_postgres_host: "localhost"
+
+# @var warpgate_database_postgres_port
+# @var warpgate_database_postgres_port:type: int
+# @var warpgate_database_postgres_port:description: >
+# Port of the PostgreSQL server used as warpgate's own database
+warpgate_database_postgres_port: 5432
+
+# @var warpgate_database_postgres_database
+# @var warpgate_database_postgres_database:type: string
+# @var warpgate_database_postgres_database:description: >
+# Database name used as warpgate's own database
+warpgate_database_postgres_database: "warpgate"
+
+# @var warpgate_database_postgres_username
+# @var warpgate_database_postgres_username:type: string
+# @var warpgate_database_postgres_username:description: >
+# Username used to connect to warpgate's own PostgreSQL database
+warpgate_database_postgres_username: "warpgate"
+
+# @var warpgate_database_postgres_password
+# @var warpgate_database_postgres_password:type: string
+# @var warpgate_database_postgres_password:description: >
+# Password used to connect to warpgate's own PostgreSQL database
+# (required when warpgate_database_backend is "postgres")
+
+# @var warpgate_database_postgres_sslmode
+# @var warpgate_database_postgres_sslmode:type: string
+# @var warpgate_database_postgres_sslmode:description: >
+# sslmode query parameter appended to the generated database URL (e.g.
+# "disable", "require", "verify-full"). null omits the parameter.
+warpgate_database_postgres_sslmode: null
+
 # @var warpgate_database_url
 # @var warpgate_database_url:type: string
 # @var warpgate_database_url:description: >
-# Warpgate database URL
-warpgate_database_url: "sqlite:{{ warpgate_data_path }}/warpgate.db"
+# Warpgate database URL. Auto-generated from warpgate_database_backend
+# and, when set to "postgres", the warpgate_database_postgres_*
+# variables above. Set this variable directly to bypass the generated
+# value entirely.
+warpgate_database_url: >-
+  {{
+    (
+      'postgres://' ~ (warpgate_database_postgres_username | urlencode) ~ ':' ~ (warpgate_database_postgres_password | urlencode)
+      ~ '@' ~ warpgate_database_postgres_host ~ ':' ~ warpgate_database_postgres_port ~ '/' ~ warpgate_database_postgres_database
+      ~ (('?sslmode=' ~ warpgate_database_postgres_sslmode) if warpgate_database_postgres_sslmode else '')
+    )
+    if warpgate_database_backend == 'postgres'
+    else ('sqlite:' ~ warpgate_data_path ~ '/warpgate.db')
+  }}
 
 # @var warpgate_mysql_enabled
 # @var warpgate_mysql_enabled:type: boolean
@@ -87,13 +161,15 @@ warpgate_mysql_port: 33306
 # @var warpgate_postgres_enabled
 # @var warpgate_postgres_enabled:type: boolean
 # @var warpgate_postgres_enabled:description: >
-# Warpgate PostgreSQL enabled
+# Enable warpgate's PostgreSQL-protocol *listener*, used to proxy client
+# connections through to PostgreSQL targets. Unrelated to
+# warpgate_database_backend, which selects warpgate's own storage engine.
 warpgate_postgres_enabled: false
 
 # @var warpgate_postgres_port
 # @var warpgate_postgres_port:type: int
 # @var warpgate_postgres_port:description: >
-# Warpgate PostgreSQL port
+# Warpgate PostgreSQL listener port
 warpgate_postgres_port: 55432
 
 # @var warpgate_record_sessions
@@ -353,3 +429,94 @@ warpgate_log_send_to: null
 # @var warpgate_log_format:description: >
 # Log output format (text or json)
 warpgate_log_format: "text"
+
+# -----------------------------------------------------------------------------
+# Docker (only used when warpgate_install_method == "docker")
+# -----------------------------------------------------------------------------
+
+# @var warpgate_docker_image
+# @var warpgate_docker_image:type: string
+# @var warpgate_docker_image:description: >
+# Warpgate Docker image name
+warpgate_docker_image: "ghcr.io/warp-tech/warpgate"
+
+# @var warpgate_docker_image_tag
+# @var warpgate_docker_image_tag:type: string
+# @var warpgate_docker_image_tag:description: >
+# Warpgate Docker image tag
+warpgate_docker_image_tag: "{{ warpgate_version }}"
+
+# @var warpgate_docker_pull
+# @var warpgate_docker_pull:type: boolean
+# @var warpgate_docker_pull:description: >
+# Always re-pull the image, even if a matching tag is already present locally
+warpgate_docker_pull: true
+
+# @var warpgate_docker_container_name
+# @var warpgate_docker_container_name:type: string
+# @var warpgate_docker_container_name:description: >
+# Name of the Warpgate Docker container
+warpgate_docker_container_name: "warpgate"
+
+# @var warpgate_docker_host_data_path
+# @var warpgate_docker_host_data_path:type: string
+# @var warpgate_docker_host_data_path:description: >
+# Host path bind-mounted to the container's /data directory (config
+# file, database, TLS material, recordings, SSH host keys)
+warpgate_docker_host_data_path: "/var/lib/warpgate"
+
+# @var warpgate_docker_restart_policy
+# @var warpgate_docker_restart_policy:type: string
+# @var warpgate_docker_restart_policy:description: >
+# Docker restart policy applied while warpgate_service_enabled is true
+# (no, always, on-failure, unless-stopped)
+warpgate_docker_restart_policy: "unless-stopped"
+
+# @var warpgate_docker_network_mode
+# @var warpgate_docker_network_mode:type: string
+# @var warpgate_docker_network_mode:description: >
+# Docker network mode for the container (e.g. "bridge", "host"). null
+# uses the Docker default.
+warpgate_docker_network_mode: null
+
+# @var warpgate_docker_publish_ports
+# @var warpgate_docker_publish_ports:type: boolean
+# @var warpgate_docker_publish_ports:description: >
+# Automatically publish the enabled listener ports (HTTP, and SSH /
+# MySQL / PostgreSQL / Kubernetes when enabled) on the same host port
+# number. Disable to manage publishing yourself via
+# warpgate_docker_extra_ports (e.g. when warpgate_docker_network_mode is
+# "host").
+warpgate_docker_publish_ports: true
+
+# @var warpgate_docker_extra_ports
+# @var warpgate_docker_extra_ports:type: list
+# @var warpgate_docker_extra_ports:description: >
+# Additional Docker port mappings, e.g. ["8443:8443"]
+warpgate_docker_extra_ports: []
+
+# @var warpgate_docker_extra_volumes
+# @var warpgate_docker_extra_volumes:type: list
+# @var warpgate_docker_extra_volumes:description: >
+# Additional Docker volume mounts, e.g.
+# ["/etc/ssl/extra-ca.pem:/etc/ssl/extra-ca.pem:ro"]
+warpgate_docker_extra_volumes: []
+
+# @var warpgate_docker_extra_env
+# @var warpgate_docker_extra_env:type: dict
+# @var warpgate_docker_extra_env:description: >
+# Additional environment variables passed to the container
+warpgate_docker_extra_env: {}
+
+# @var warpgate_docker_extra_hosts
+# @var warpgate_docker_extra_hosts:type: list
+# @var warpgate_docker_extra_hosts:description: >
+# Additional /etc/hosts entries for the container, e.g.
+# ["db.internal:10.0.0.5"]
+warpgate_docker_extra_hosts: []
+
+# @var warpgate_docker_log_driver
+# @var warpgate_docker_log_driver:type: string
+# @var warpgate_docker_log_driver:description: >
+# Docker logging driver for the container (null = Docker default)
+warpgate_docker_log_driver: null

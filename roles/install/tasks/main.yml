@@ -2,8 +2,18 @@
 - name: "Import prepare tasks"
   ansible.builtin.import_tasks: "prepare.yml"
 
-- name: "Import install tasks"
+- name: "Import binary install tasks"
   ansible.builtin.import_tasks: "install.yml"
+  when: warpgate_install_method == "binary"
 
-- name: "Import configure tasks"
+- name: "Import binary configure tasks"
   ansible.builtin.import_tasks: "configure.yml"
+  when: warpgate_install_method == "binary"
+
+- name: "Import docker install tasks"
+  ansible.builtin.import_tasks: "install_docker.yml"
+  when: warpgate_install_method == "docker"
+
+- name: "Import docker configure tasks"
+  ansible.builtin.import_tasks: "configure_docker.yml"
+  when: warpgate_install_method == "docker"

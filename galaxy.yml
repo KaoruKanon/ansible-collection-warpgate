@@ -17,7 +17,8 @@ tags:
   - http
   - mysql
   - postgresql
-dependencies: {}
+dependencies:
+  community.docker: ">=3.0.0"
 repository: 'https://github.com/plopoyop/ansible-collection-warpgate'
 homepage: 'https://github.com/plopoyop/ansible-collection-warpgate'
 issues: 'https://github.com/plopoyop/ansible-collection-warpgate/issues'
