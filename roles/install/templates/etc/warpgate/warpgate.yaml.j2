@@ -3,12 +3,12 @@
 
 sso_providers: {{ warpgate_sso_providers }}
 recordings:
-  enable: {{ warpgate_record_sessions | string | ansible.builtin.lower }}
+  enable: {{ warpgate_record_sessions | string | lower }}
   path: {{ warpgate_recordings_path }}
 external_host: {{ warpgate_external_host }}
 database_url: {{ warpgate_database_url }}
 ssh:
-  enable: {{ warpgate_ssh_enabled | string | ansible.builtin.lower }}
+  enable: {{ warpgate_ssh_enabled | string | lower }}
   listen: '[::]:{{ warpgate_ssh_port }}'
   external_port: {{ warpgate_ssh_external_port | ansible.builtin.to_json }}
   external_host: {{ warpgate_ssh_external_host | ansible.builtin.to_json }}
@@ -22,12 +22,12 @@ http:
   external_host: {{ warpgate_http_external_host | ansible.builtin.to_json }}
   certificate: {{ warpgate_http_certificate }}
   key: {{ warpgate_http_key }}
-  trust_x_forwarded_headers: {{ warpgate_http_trust_x_forwarded_headers | string | ansible.builtin.lower }}
+  trust_x_forwarded_headers: {{ warpgate_http_trust_x_forwarded_headers | string | lower }}
   session_max_age: {{ warpgate_http_session_max_age }}
   cookie_max_age: {{ warpgate_http_cookie_max_age }}
   sni_certificates: {{ warpgate_http_sni_certificates }}
 kubernetes:
-  enable: {{ warpgate_kubernetes_enabled | string | ansible.builtin.lower }}
+  enable: {{ warpgate_kubernetes_enabled | string | lower }}
   listen: '[::]:{{ warpgate_kubernetes_port }}'
   external_port: {{ warpgate_kubernetes_external_port | ansible.builtin.to_json }}
   external_host: {{ warpgate_kubernetes_external_host | ansible.builtin.to_json }}
@@ -35,14 +35,14 @@ kubernetes:
   key: {{ warpgate_kubernetes_key }}
   session_max_age: {{ warpgate_kubernetes_session_max_age }}
 mysql:
-  enable: {{ warpgate_mysql_enabled | string | ansible.builtin.lower }}
+  enable: {{ warpgate_mysql_enabled | string | lower }}
   listen: '[::]:{{ warpgate_mysql_port }}'
   external_port: {{ warpgate_mysql_external_port | ansible.builtin.to_json }}
   external_host: {{ warpgate_mysql_external_host | ansible.builtin.to_json }}
   certificate: {{ warpgate_mysql_certificate }}
   key: {{ warpgate_mysql_key }}
 postgres:
-  enable: {{ warpgate_postgres_enabled | string | ansible.builtin.lower }}
+  enable: {{ warpgate_postgres_enabled | string | lower }}
   listen: '[::]:{{ warpgate_postgres_port }}'
   external_port: {{ warpgate_postgres_external_port | ansible.builtin.to_json }}
   external_host: {{ warpgate_postgres_external_host | ansible.builtin.to_json }}
