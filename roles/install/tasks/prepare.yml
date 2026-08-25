@@ -3,6 +3,7 @@
   ansible.builtin.group:
     name: "{{ warpgate_system_group }}"
     system: true
+  register: warpgate_group_result
 
 - name: "Create Warpgate user"
   ansible.builtin.user:
@@ -11,6 +12,12 @@
     create_home: false
     shell: "/usr/sbin/nologin"
     system: true
+  register: warpgate_user_result
+
+- name: "Set Warpgate uid/gid facts"
+  ansible.builtin.set_fact:
+    warpgate_uid: "{{ warpgate_user_result.uid }}"
+    warpgate_gid: "{{ warpgate_group_result.gid }}"
 
 - name: "Detect existing binary installation"
   when: warpgate_install_method == "binary"

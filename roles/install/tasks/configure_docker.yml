@@ -29,6 +29,7 @@
     name: "{{ warpgate_docker_container_name }}-setup"
     image: "{{ warpgate_docker_image }}:{{ warpgate_docker_image_tag }}"
     command: "{{ warpgate_command_args | join(' ') }}"
+    user: "{{ warpgate_uid }}:{{ warpgate_gid }}"
     volumes:
       - "{{ warpgate_docker_host_data_path }}:/data"
     detach: false
@@ -63,6 +64,7 @@
     name: "{{ warpgate_docker_container_name }}"
     image: "{{ warpgate_docker_image }}:{{ warpgate_docker_image_tag }}"
     state: "{{ warpgate_service_state }}"
+    user: "{{ warpgate_uid }}:{{ warpgate_gid }}"
     restart_policy: "{{ warpgate_docker_restart_policy if warpgate_service_enabled else 'no' }}"
     ports: "{{ warpgate_docker_ports if warpgate_docker_publish_ports else omit }}"
     volumes: "{{ [warpgate_docker_host_data_path ~ ':/data'] + warpgate_docker_extra_volumes }}"
