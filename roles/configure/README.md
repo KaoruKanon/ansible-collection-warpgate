@@ -162,6 +162,8 @@ default_database_name / idle_timeout on mysql_options / postgres_options,
 iam_role on mysql/postgres options (mutually exclusive with password).
 Optional v0.25+ fields: jump_host / iam_role on ssh_options,
 iam_role on kubernetes_options, protocol_version on postgres_options.
+rdp_options (Warpgate >= 0.27.0, unverified against the live API schema):
+host, port, username, password.
 
 **_Type:_** list<br />
 

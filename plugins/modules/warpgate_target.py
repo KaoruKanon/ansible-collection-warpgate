@@ -241,6 +241,29 @@ options:
                     - PostgreSQL wire protocol version to use upstream (Warpgate >= 0.25).
                 type: str
                 choices: ["3.0", "3.2"]
+    rdp_options:
+        description:
+            - Options for an RDP target (Warpgate >= 0.27.0, unverified against the live API schema).
+            - The upstream connection always uses TLS + CredSSP/NLA; the target must accept NLA logons over TLS 1.2.
+        type: dict
+        required: false
+        suboptions:
+            host:
+                description: RDP host (hostname or IP)
+                type: str
+                required: true
+            port:
+                description: RDP port
+                type: int
+                required: true
+            username:
+                description: RDP username
+                type: str
+                required: true
+            password:
+                description: RDP password
+                type: str
+                required: true
     kubernetes_options:
         description:
             - Options for a Kubernetes target (experimental, requires Warpgate >= 0.21.0)
@@ -375,6 +398,19 @@ EXAMPLES = """
       - "database-admins"
     state: present
 
+- name: Create an RDP target
+  plopoyop.warpgate.warpgate_target:
+    host: "https://warpgate.example.com"
+    token: "{{ warpgate_api_token }}"
+    name: "windows-server"
+    description: "Windows RDP server"
+    rdp_options:
+      host: "10.0.0.20"
+      port: 3389
+      username: "administrator"
+      password: "{{ rdp_password }}"
+    state: present
+
 - name: Create a Kubernetes target with token auth
   plopoyop.warpgate.warpgate_target:
     host: "https://warpgate.example.com"
@@ -494,6 +530,7 @@ def build_target_options(module):
     http_options = module.params.get("http_options")
     mysql_options = module.params.get("mysql_options")
     postgres_options = module.params.get("postgres_options")
+    rdp_options = module.params.get("rdp_options")
     kubernetes_options = module.params.get("kubernetes_options")
 
     option_count = sum(
@@ -502,6 +539,7 @@ def build_target_options(module):
             1 if http_options else 0,
             1 if mysql_options else 0,
             1 if postgres_options else 0,
+            1 if rdp_options else 0,
             1 if kubernetes_options else 0,
         ]
     )
@@ -509,12 +547,12 @@ def build_target_options(module):
     if option_count == 0:
         module.fail_json(
             msg="One of ssh_options, http_options, mysql_options, "
-            "postgres_options, or kubernetes_options must be specified"
+            "postgres_options, rdp_options, or kubernetes_options must be specified"
         )
     if option_count > 1:
         module.fail_json(
             msg="Only one of ssh_options, http_options, mysql_options, "
-            "postgres_options, or kubernetes_options can be specified"
+            "postgres_options, rdp_options, or kubernetes_options can be specified"
         )
 
     if ssh_options:
@@ -619,6 +657,17 @@ def build_target_options(module):
                     msg="postgres_options: protocol_version must be one of '3.0', '3.2'"
                 )
             options["protocol_version"] = protocol_version
+
+        return options
+
+    elif rdp_options:
+        options = {
+            "kind": "Rdp",
+            "host": rdp_options["host"],
+            "port": rdp_options["port"],
+            "username": rdp_options["username"],
+            "auth": {"kind": "Password", "password": rdp_options["password"]},
+        }
 
         return options
 
@@ -843,6 +892,16 @@ def main():
         http_options=dict(type="dict", required=False),
         mysql_options=dict(type="dict", required=False),
         postgres_options=dict(type="dict", required=False),
+        rdp_options=dict(
+            type="dict",
+            required=False,
+            options=dict(
+                host=dict(type="str", required=True),
+                port=dict(type="int", required=True),
+                username=dict(type="str", required=True),
+                password=dict(type="str", required=True, no_log=True),
+            ),
+        ),
         kubernetes_options=dict(type="dict", required=False),
         roles=dict(type="list", elements="str", required=False),
         state=dict(type="str", choices=["present", "absent"], default="present"),
