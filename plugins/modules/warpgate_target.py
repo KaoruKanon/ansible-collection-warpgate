@@ -243,8 +243,7 @@ options:
                 choices: ["3.0", "3.2"]
     rdp_options:
         description:
-            - Options for an RDP target (Warpgate >= 0.27.0, unverified against the live API schema).
-            - The upstream connection always uses TLS + CredSSP/NLA; the target must accept NLA logons over TLS 1.2.
+            - Options for an RDP target (Warpgate >= 0.27.0).
         type: dict
         required: false
         suboptions:
@@ -264,6 +263,20 @@ options:
                 description: RDP password
                 type: str
                 required: true
+            domain:
+                description: Windows domain to authenticate against, if any.
+                type: str
+                required: false
+            tls_security:
+                description: TLS security level for the upstream RDP connection.
+                type: str
+                required: false
+                default: "Tls12"
+            verify_tls:
+                description: Whether to verify the upstream RDP server's TLS certificate.
+                type: bool
+                required: false
+                default: false
     kubernetes_options:
         description:
             - Options for a Kubernetes target (experimental, requires Warpgate >= 0.21.0)
@@ -409,6 +422,8 @@ EXAMPLES = """
       port: 3389
       username: "administrator"
       password: "{{ rdp_password }}"
+      tls_security: "Tls12"
+      verify_tls: false
     state: present
 
 - name: Create a Kubernetes target with token auth
@@ -667,6 +682,9 @@ def build_target_options(module):
             "port": rdp_options["port"],
             "username": rdp_options["username"],
             "auth": {"kind": "Password", "password": rdp_options["password"]},
+            "domain": rdp_options.get("domain"),
+            "tls_security": rdp_options.get("tls_security", "Tls12"),
+            "verify_tls": rdp_options.get("verify_tls", False),
         }
 
         return options
@@ -900,6 +918,9 @@ def main():
                 port=dict(type="int", required=True),
                 username=dict(type="str", required=True),
                 password=dict(type="str", required=True, no_log=True),
+                domain=dict(type="str", required=False),
+                tls_security=dict(type="str", required=False, default="Tls12"),
+                verify_tls=dict(type="bool", required=False, default=False),
             ),
         ),
         kubernetes_options=dict(type="dict", required=False),
