@@ -7,10 +7,10 @@
       - "--data-path {{ warpgate_data_path }}"
       - "--http-port {{ warpgate_http_port }}"
       - "--admin-password {{ warpgate_admin_password }}"
-      - "{{ '--ssh-port ' + warpgate_ssh_port | ansible.builtin.string if warpgate_ssh_enabled else '' }}"
+      - "{{ '--ssh-port ' + warpgate_ssh_port | string if warpgate_ssh_enabled else '' }}"
       - "--database-url {{ warpgate_database_url }}"
-      - "{{ '--mysql-port ' + warpgate_mysql_port | ansible.builtin.string if warpgate_mysql_enabled else '' }}"
-      - "{{ '--postgres-port ' + warpgate_postgres_port | ansible.builtin.string if warpgate_postgres_enabled else '' }}"
+      - "{{ '--mysql-port ' + warpgate_mysql_port | string if warpgate_mysql_enabled else '' }}"
+      - "{{ '--postgres-port ' + warpgate_postgres_port | string if warpgate_postgres_enabled else '' }}"
       - "{{ '--record-sessions' if warpgate_record_sessions else '' }}"
       - "--external-host {{ warpgate_external_host }}"
 
