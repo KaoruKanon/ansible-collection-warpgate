@@ -1,7 +1,7 @@
 # Config generated in version v0.23.1-modified
 # yaml-language-server: $schema=https://raw.githubusercontent.com/warp-tech/warpgate/refs/heads/main/config-schema.json
 
-sso_providers: {{ warpgate_sso_providers }}
+sso_providers: {{ warpgate_sso_providers | ansible.builtin.to_json }}
 recordings:
   enable: {{ warpgate_record_sessions | string | lower }}
   path: {{ warpgate_recordings_path }}
@@ -25,7 +25,7 @@ http:
   trust_x_forwarded_headers: {{ warpgate_http_trust_x_forwarded_headers | string | lower }}
   session_max_age: {{ warpgate_http_session_max_age }}
   cookie_max_age: {{ warpgate_http_cookie_max_age }}
-  sni_certificates: {{ warpgate_http_sni_certificates }}
+  sni_certificates: {{ warpgate_http_sni_certificates | ansible.builtin.to_json }}
 kubernetes:
   enable: {{ warpgate_kubernetes_enabled | string | lower }}
   listen: '[::]:{{ warpgate_kubernetes_port }}'
