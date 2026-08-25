@@ -15,7 +15,13 @@
 
 - name: "Check if initial configuration already exists"
   ansible.builtin.stat:
-    path: "{{ warpgate_docker_host_data_path }}/warpgate.yaml"
+    # tls.certificate.pem is one of the last artifacts unattended-setup
+    # generates (after warpgate.yaml, the SSH host keys and the database
+    # connection). Checking for warpgate.yaml alone would treat a run that
+    # crashed partway through (e.g. on a bad database connection) as
+    # "already configured" and skip re-running unattended-setup, leaving
+    # the container permanently missing its TLS certificate.
+    path: "{{ warpgate_docker_host_data_path }}/tls.certificate.pem"
   register: warpgate_docker_config_stat
 
 - name: "Remove leftover setup container from a previous failed run"
