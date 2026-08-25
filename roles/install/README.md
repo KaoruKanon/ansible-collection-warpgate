@@ -64,6 +64,12 @@ Install warpgate
   - [warpgate_postgres_external_port](#warpgate_postgres_external_port)
   - [warpgate_postgres_key](#warpgate_postgres_key)
   - [warpgate_postgres_port](#warpgate_postgres_port)
+  - [warpgate_rdp_certificate](#warpgate_rdp_certificate)
+  - [warpgate_rdp_enabled](#warpgate_rdp_enabled)
+  - [warpgate_rdp_external_host](#warpgate_rdp_external_host)
+  - [warpgate_rdp_external_port](#warpgate_rdp_external_port)
+  - [warpgate_rdp_key](#warpgate_rdp_key)
+  - [warpgate_rdp_port](#warpgate_rdp_port)
   - [warpgate_record_sessions](#warpgate_record_sessions)
   - [warpgate_recordings_path](#warpgate_recordings_path)
   - [warpgate_service_enabled](#warpgate_service_enabled)
@@ -814,6 +820,78 @@ Warpgate PostgreSQL listener port
 
 ```YAML
 warpgate_postgres_port: 55432
+```
+
+### warpgate_rdp_certificate
+
+TLS certificate path for the RDP listener
+
+**_Type:_** string<br />
+
+#### Default value
+
+```YAML
+warpgate_rdp_certificate: '{{ warpgate_data_path }}/tls.certificate.pem'
+```
+
+### warpgate_rdp_enabled
+
+Enable warpgate's RDP listener
+
+**_Type:_** boolean<br />
+
+#### Default value
+
+```YAML
+warpgate_rdp_enabled: false
+```
+
+### warpgate_rdp_external_host
+
+Public hostname advertised for the RDP listener (null = auto)
+
+**_Type:_** string<br />
+
+#### Default value
+
+```YAML
+warpgate_rdp_external_host:
+```
+
+### warpgate_rdp_external_port
+
+Public port advertised for the RDP listener (null = auto)
+
+**_Type:_** int<br />
+
+#### Default value
+
+```YAML
+warpgate_rdp_external_port:
+```
+
+### warpgate_rdp_key
+
+TLS key path for the RDP listener
+
+**_Type:_** string<br />
+
+#### Default value
+
+```YAML
+warpgate_rdp_key: '{{ warpgate_data_path }}/tls.key.pem'
+```
+
+### warpgate_rdp_port
+
+Warpgate RDP listener port
+
+**_Type:_** int<br />
+
+#### Default value
+
+```YAML
+warpgate_rdp_port: 3389
 ```
 
 ### warpgate_record_sessions

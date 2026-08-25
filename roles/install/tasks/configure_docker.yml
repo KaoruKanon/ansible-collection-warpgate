@@ -61,6 +61,7 @@
         + (warpgate_mysql_enabled | ternary([warpgate_mysql_port ~ ':' ~ warpgate_mysql_port], []))
         + (warpgate_postgres_enabled | ternary([warpgate_postgres_port ~ ':' ~ warpgate_postgres_port], []))
         + (warpgate_kubernetes_enabled | ternary([warpgate_kubernetes_port ~ ':' ~ warpgate_kubernetes_port], []))
+        + (warpgate_rdp_enabled | ternary([warpgate_rdp_port ~ ':' ~ warpgate_rdp_port], []))
         + warpgate_docker_extra_ports
       }}
   when: warpgate_docker_publish_ports

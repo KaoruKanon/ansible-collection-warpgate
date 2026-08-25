@@ -172,6 +172,18 @@ warpgate_postgres_enabled: false
 # Warpgate PostgreSQL listener port
 warpgate_postgres_port: 55432
 
+# @var warpgate_rdp_enabled
+# @var warpgate_rdp_enabled:type: boolean
+# @var warpgate_rdp_enabled:description: >
+# Enable warpgate's RDP listener
+warpgate_rdp_enabled: false
+
+# @var warpgate_rdp_port
+# @var warpgate_rdp_port:type: int
+# @var warpgate_rdp_port:description: >
+# Warpgate RDP listener port
+warpgate_rdp_port: 3389
+
 # @var warpgate_record_sessions
 # @var warpgate_record_sessions:type: boolean
 # @var warpgate_record_sessions:description: >
@@ -401,6 +413,34 @@ warpgate_postgres_certificate: "{{ warpgate_tls_certificate_path }}"
 # @var warpgate_postgres_key:description: >
 # TLS key path for the PostgreSQL listener
 warpgate_postgres_key: "{{ warpgate_tls_key_path }}"
+
+# -----------------------------------------------------------------------------
+# RDP listener
+# -----------------------------------------------------------------------------
+
+# @var warpgate_rdp_external_host
+# @var warpgate_rdp_external_host:type: string
+# @var warpgate_rdp_external_host:description: >
+# Public hostname advertised for the RDP listener (null = auto)
+warpgate_rdp_external_host: null
+
+# @var warpgate_rdp_external_port
+# @var warpgate_rdp_external_port:type: int
+# @var warpgate_rdp_external_port:description: >
+# Public port advertised for the RDP listener (null = auto)
+warpgate_rdp_external_port: null
+
+# @var warpgate_rdp_certificate
+# @var warpgate_rdp_certificate:type: string
+# @var warpgate_rdp_certificate:description: >
+# TLS certificate path for the RDP listener
+warpgate_rdp_certificate: "{{ warpgate_tls_certificate_path }}"
+
+# @var warpgate_rdp_key
+# @var warpgate_rdp_key:type: string
+# @var warpgate_rdp_key:description: >
+# TLS key path for the RDP listener
+warpgate_rdp_key: "{{ warpgate_tls_key_path }}"
 
 # -----------------------------------------------------------------------------
 # Logging
