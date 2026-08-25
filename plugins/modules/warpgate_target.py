@@ -271,6 +271,7 @@ options:
                 description: TLS security level for the upstream RDP connection.
                 type: str
                 required: false
+                choices: ["Tls12", "Tls12WithLegacyCiphers", "Tls10Unsafe"]
                 default: "Tls12"
             verify_tls:
                 description: Whether to verify the upstream RDP server's TLS certificate.
@@ -919,7 +920,12 @@ def main():
                 username=dict(type="str", required=True),
                 password=dict(type="str", required=True, no_log=True),
                 domain=dict(type="str", required=False),
-                tls_security=dict(type="str", required=False, default="Tls12"),
+                tls_security=dict(
+                    type="str",
+                    required=False,
+                    choices=["Tls12", "Tls12WithLegacyCiphers", "Tls10Unsafe"],
+                    default="Tls12",
+                ),
                 verify_tls=dict(type="bool", required=False, default=False),
             ),
         ),
