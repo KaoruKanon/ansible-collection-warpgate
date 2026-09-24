@@ -16,6 +16,8 @@ galaxy_info:
     - "http"
     - "mysql"
     - "postgresql"
+    - "docker"
+    - "rdp"
 
   platforms:
     - name: "Debian"

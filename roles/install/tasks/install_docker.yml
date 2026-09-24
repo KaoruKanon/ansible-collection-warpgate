@@ -1,0 +1,16 @@
+---
+- name: "Ensure Docker host data path exists"
+  ansible.builtin.file:
+    path: "{{ warpgate_docker_host_data_path }}"
+    state: "directory"
+    owner: "{{ warpgate_system_user }}"
+    group: "{{ warpgate_system_group }}"
+    mode: "0750"
+
+- name: "Pull Warpgate Docker image"
+  community.docker.docker_image:
+    name: "{{ warpgate_docker_image }}"
+    tag: "{{ warpgate_docker_image_tag }}"
+    source: "pull"
+    force_source: "{{ warpgate_docker_pull }}"
+  ignore_errors: "{{ ansible_check_mode }}"

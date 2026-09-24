@@ -7,4 +7,4 @@ warpgate_executable_path: "{{ warpgate_install_path }}/warpgate"
 warpgate_service_name: "warpgate"
 warpgate_service_file_path: "/etc/systemd/system/{{ warpgate_service_name }}.service"
 
-warpgate_config_file_directory: "/etc/warpgate"
+warpgate_config_file_directory: "{{ '/data' if warpgate_install_method == 'docker' else '/etc/warpgate' }}"

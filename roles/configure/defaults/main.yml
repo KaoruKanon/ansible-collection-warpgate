@@ -131,6 +131,9 @@ warpgate_target_groups: []
 # iam_role on mysql/postgres options (mutually exclusive with password).
 # Optional v0.25+ fields: jump_host / iam_role on ssh_options,
 # iam_role on kubernetes_options, protocol_version on postgres_options.
+# rdp_options (Warpgate >= 0.27.0): host, port, username, password.
+# Optional: domain, tls_security (Tls12/Tls12WithLegacyCiphers/Tls10Unsafe,
+# default "Tls12"), verify_tls (default false).
 # @var warpgate_targets: example:
 # warpgate_targets:
 #   - name: "test"
@@ -141,4 +144,13 @@ warpgate_target_groups: []
 #       host: "localhost"
 #       port: 22
 #       username: "test"
+#   - name: "windows-server"
+#     description: "Windows RDP server"
+#     rdp_options:
+#       host: "10.0.0.20"
+#       port: 3389
+#       username: "administrator"
+#       password: "{{ rdp_password }}"
+#       tls_security: "Tls12"
+#       verify_tls: false
 warpgate_targets: []

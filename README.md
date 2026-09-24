@@ -6,6 +6,7 @@ Ansible collection to install and configure [Warpgate](https://github.com/warp-t
 
 - Ansible >= 2.19.0
 - Target platforms: Debian (trixie, bookworm), RHEL/EL (9, 10)
+- `community.docker` (>=3.0.0, installed automatically as a collection dependency) and a working Docker Engine on the target host — only when using `warpgate_install_method: docker` (see below)
 
 ## Installation
 
@@ -25,7 +26,7 @@ collections:
 
 ### `plopoyop.warpgate.install`
 
-Installs Warpgate from the official release binary, configures the systemd service, and generates the initial configuration file.
+Installs and runs Warpgate, either from the official release binary (managed via systemd) or as the official Docker image (managed via the Docker Engine), configures the listeners, and generates the initial configuration file. Also supports backing Warpgate's own database with SQLite (default) or PostgreSQL.
 
 ```yaml
 - hosts: bastions
@@ -44,20 +45,64 @@ Key variables:
 
 | Variable | Default | Description |
 |---|---|---|
-| `warpgate_version` | `0.27.1` | Warpgate release version |
+| `warpgate_install_method` | `binary` | `binary` (systemd) or `docker` (Docker Engine) |
+| `warpgate_version` | `0.27.1` | Warpgate release version / Docker image tag |
 | `warpgate_admin_password` | *(required)* | Admin password |
 | `warpgate_http_port` | `8888` | HTTPS listen port |
 | `warpgate_ssh_enabled` | `false` | Enable SSH proxy |
 | `warpgate_ssh_port` | `2222` | SSH listen port |
 | `warpgate_mysql_enabled` | `false` | Enable MySQL proxy |
-| `warpgate_postgres_enabled` | `false` | Enable PostgreSQL proxy |
+| `warpgate_postgres_enabled` | `false` | Enable PostgreSQL proxy (listener to PostgreSQL *targets*, unrelated to Warpgate's own database) |
 | `warpgate_kubernetes_enabled` | `false` | Enable Kubernetes proxy |
-| `warpgate_database_url` | `sqlite:/var/lib/warpgate/warpgate.db` | Database URL |
+| `warpgate_database_backend` | `sqlite` | Warpgate's own storage engine: `sqlite` or `postgres` |
+| `warpgate_database_url` | *(auto)* | Database URL, auto-built from `warpgate_database_backend` (and `warpgate_database_postgres_*` when relevant); set directly to override |
 | `warpgate_external_host` | `localhost` | External hostname for TLS |
 | `warpgate_record_sessions` | `true` | Record session recordings |
 | `warpgate_sso_providers` | `[]` | SSO provider configuration |
 
 See the [install role documentation](roles/install/README.md) and [roles/install/defaults/main.yml](roles/install/defaults/main.yml) for the full list.
+
+#### Running Warpgate via Docker
+
+Set `warpgate_install_method: docker` to run the [official Warpgate image](https://github.com/warp-tech/warpgate/pkgs/container/warpgate) via the Docker Engine instead of installing the standalone binary. The role pulls the image, runs the one-shot `unattended-setup` in a throwaway container on first run, writes the generated config file to the host, and manages a long-running container with a Docker restart policy (no systemd unit is created).
+
+Requirements: the `community.docker` collection (`>=3.0.0`, pulled in as a collection dependency) and a working Docker Engine already installed on the target host — this role does **not** install Docker itself.
+
+```yaml
+- hosts: bastions
+  roles:
+    - role: plopoyop.warpgate.install
+      vars:
+        warpgate_install_method: "docker"
+        warpgate_admin_password: "{{ vault_warpgate_admin_password }}"
+        warpgate_docker_host_data_path: "/var/lib/warpgate"   # bind-mounted to the container's /data
+        warpgate_ssh_enabled: true
+        warpgate_ssh_port: 2222
+        warpgate_external_host: "bastion.example.com"
+```
+
+Docker-specific variables such as `warpgate_docker_image`, `warpgate_docker_image_tag`, `warpgate_docker_container_name`, `warpgate_docker_restart_policy`, `warpgate_docker_network_mode`, `warpgate_docker_publish_ports`, `warpgate_docker_extra_ports`, `warpgate_docker_extra_volumes` and `warpgate_docker_extra_env` let you customize the container without touching the role's tasks. See [roles/install/README.md](roles/install/README.md) for the full list. `warpgate_service_state` / `warpgate_service_enabled` still control whether the container is started/stopped and whether it comes back after a reboot (mapped to the Docker restart policy), for both install methods.
+
+#### Using PostgreSQL as Warpgate's own database
+
+By default Warpgate stores its own state (users, roles, targets, sessions, ...) in a local SQLite file. To use PostgreSQL instead:
+
+```yaml
+- hosts: bastions
+  roles:
+    - role: plopoyop.warpgate.install
+      vars:
+        warpgate_admin_password: "{{ vault_warpgate_admin_password }}"
+        warpgate_database_backend: "postgres"
+        warpgate_database_postgres_host: "db.example.com"
+        warpgate_database_postgres_port: 5432
+        warpgate_database_postgres_database: "warpgate"
+        warpgate_database_postgres_username: "warpgate"
+        warpgate_database_postgres_password: "{{ vault_warpgate_db_password }}"
+        warpgate_database_postgres_sslmode: "require"
+```
+
+This is unrelated to `warpgate_postgres_enabled`, which toggles Warpgate's PostgreSQL-protocol *listener* used to proxy connections to PostgreSQL *targets*. Both can be used independently or together — Warpgate can, for instance, store its own state in PostgreSQL while also proxying to other PostgreSQL servers. Works with either `warpgate_install_method`. This role does not provision the PostgreSQL server itself — point it at an existing instance.
 
 ### `plopoyop.warpgate.configure`
 

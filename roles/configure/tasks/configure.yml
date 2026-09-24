@@ -1,6 +1,6 @@
 ---
 - name: Handle Warpgate global parameters
-  warpgate_parameters:
+  plopoyop.warpgate.warpgate_parameters:
     host: "{{ warpgate_api_host }}"
     token: "{{ warpgate_api_token if (warpgate_api_token is defined and warpgate_api_token | length > 0) else omit }}"
     api_username: "{{ warpgate_admin_username | default(omit) }}"
@@ -48,7 +48,7 @@
   when: warpgate_parameters | length > 0
 
 - name: Handle Warpgate roles
-  warpgate_role:
+  plopoyop.warpgate.warpgate_role:
     host: "{{ warpgate_api_host }}"
     token: "{{ warpgate_api_token if (warpgate_api_token is defined and warpgate_api_token | length > 0) else omit }}"
     api_username: "{{ warpgate_admin_username | default(omit) }}"
@@ -63,7 +63,7 @@
     loop_var: "warpgate_current_role"
 
 - name: Handle Warpgate admin roles
-  warpgate_admin_role:
+  plopoyop.warpgate.warpgate_admin_role:
     host: "{{ warpgate_api_host }}"
     token: "{{ warpgate_api_token if (warpgate_api_token is defined and warpgate_api_token | length > 0) else omit }}"
     api_username: "{{ warpgate_admin_username | default(omit) }}"
@@ -78,7 +78,7 @@
     loop_var: "warpgate_current_admin_role"
 
 - name: Handle Warpgate users
-  warpgate_user:
+  plopoyop.warpgate.warpgate_user:
     host: "{{ warpgate_api_host }}"
     token: "{{ warpgate_api_token if (warpgate_api_token is defined and warpgate_api_token | length > 0) else omit }}"
     api_username: "{{ warpgate_admin_username | default(omit) }}"
@@ -105,7 +105,7 @@
     loop_var: "warpgate_current_user"
 
 - name: Handle Warpgate target groups
-  warpgate_group:
+  plopoyop.warpgate.warpgate_group:
     host: "{{ warpgate_api_host }}"
     token: "{{ warpgate_api_token if (warpgate_api_token is defined and warpgate_api_token | length > 0) else omit }}"
     api_username: "{{ warpgate_admin_username | default(omit) }}"
@@ -120,7 +120,7 @@
     loop_var: "warpgate_current_target_group"
 
 - name: Handle Warpgate targets
-  warpgate_target:
+  plopoyop.warpgate.warpgate_target:
     host: "{{ warpgate_api_host }}"
     token: "{{ warpgate_api_token if (warpgate_api_token is defined and warpgate_api_token | length > 0) else omit }}"
     api_username: "{{ warpgate_admin_username | default(omit) }}"
