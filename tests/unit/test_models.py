@@ -1,5 +1,8 @@
 """Tests for model classes: from_dict / to_dict round-trips and edge cases."""
 
+from unittest.mock import MagicMock
+
+from warpgate_client.admin_role import PERMISSION_FIELDS, AdminRole
 from warpgate_client.credential import (
     CertificateCredential,
     IssuedCertificateCredential,
@@ -8,7 +11,7 @@ from warpgate_client.credential import (
     SsoCredential,
 )
 from warpgate_client.role import Role
-from warpgate_client.target import TLS, Target
+from warpgate_client.target import TLS, Target, create_target, update_target
 from warpgate_client.target_group import TargetGroup
 from warpgate_client.ticket import Ticket, TicketAndSecret
 from warpgate_client.user import User, UserRequireCredentialsPolicy
@@ -110,6 +113,24 @@ class TestUser:
         u = User.from_dict({"id": "u1", "username": "alice", "credential_policy": {}})
         assert u.credential_policy is None
 
+    def test_to_dict_round_trip(self):
+        data = {
+            "id": "u1",
+            "username": "alice",
+            "description": "Alice",
+            "credential_policy": {"ssh": ["PublicKey"]},
+            "rate_limit_bytes_per_second": 1024,
+            "ldap_server_id": "ldap1",
+            "allowed_ip_ranges": ["10.0.0.0/8"],
+        }
+        assert User.from_dict(data).to_dict() == data
+
+    def test_to_dict_without_policy(self):
+        d = User.from_dict({"id": "u1", "username": "alice"}).to_dict()
+        assert d["credential_policy"] == {}
+        assert d["rate_limit_bytes_per_second"] is None
+        assert d["allowed_ip_ranges"] == []
+
 
 # ---------------------------------------------------------------------------
 # Role
@@ -128,6 +149,15 @@ class TestRole:
     def test_from_dict_minimal(self):
         r = Role.from_dict({"id": "r1", "name": "ops"})
         assert r.description == ""
+
+    def test_to_dict_round_trip(self):
+        data = {
+            "id": "r1",
+            "name": "developers",
+            "description": "Dev team",
+            "is_default": True,
+        }
+        assert Role.from_dict(data).to_dict() == data
 
 
 # ---------------------------------------------------------------------------
@@ -254,6 +284,24 @@ class TestTarget:
         assert t.description == ""
         assert t.allow_roles == []
         assert t.options == {}
+        assert t.require_approval is False
+        assert t.ticket_requests_disabled is False
+        assert t.ticket_require_approval is False
+
+    def test_to_dict_round_trip(self):
+        data = {
+            "id": "t1",
+            "name": "web",
+            "description": "Web server",
+            "group_id": "g1",
+            "allow_roles": ["r1"],
+            "options": {"kind": "Ssh"},
+            "rate_limit_bytes_per_second": 2048,
+            "require_approval": True,
+            "ticket_requests_disabled": True,
+            "ticket_require_approval": False,
+        }
+        assert Target.from_dict(data).to_dict() == data
 
 
 # ---------------------------------------------------------------------------
@@ -271,6 +319,71 @@ class TestTargetGroup:
     def test_from_dict_null_color(self):
         g = TargetGroup.from_dict({"id": "g1", "name": "dev", "color": None})
         assert g.color == ""
+
+    def test_to_dict_round_trip(self):
+        data = {"id": "g1", "name": "prod", "description": "Prod", "color": "Danger"}
+        assert TargetGroup.from_dict(data).to_dict() == data
+
+
+# ---------------------------------------------------------------------------
+# AdminRole
+# ---------------------------------------------------------------------------
+
+
+class TestAdminRole:
+    def test_to_dict_exposes_every_permission(self):
+        d = AdminRole.from_dict(
+            {"id": "a1", "name": "auditor", "sessions_view": True}
+        ).to_dict()
+        assert d["id"] == "a1"
+        assert d["name"] == "auditor"
+        assert d["permissions"]["sessions_view"] is True
+        assert set(d["permissions"]) == set(PERMISSION_FIELDS)
+        assert all(
+            v is False for k, v in d["permissions"].items() if k != "sessions_view"
+        )
+
+    def test_to_dict_is_a_copy(self):
+        role = AdminRole.from_dict({"id": "a1", "name": "auditor"})
+        role.to_dict()["permissions"]["config_edit"] = True
+        assert role.permissions["config_edit"] is False
+
+    def test_permission_fields_include_approve_sessions(self):
+        # Required boolean added to AdminRoleDataRequest in Warpgate 0.29.
+        assert "approve_sessions" in PERMISSION_FIELDS
+
+
+# ---------------------------------------------------------------------------
+# Target create/update request body (Warpgate 0.29 required fields)
+# ---------------------------------------------------------------------------
+
+
+class TestTargetRequestBody:
+    _APPROVAL_FIELDS = (
+        "require_approval",
+        "ticket_requests_disabled",
+        "ticket_require_approval",
+    )
+
+    def _client(self):
+        client = MagicMock()
+        client._request.return_value = {"id": "t1", "name": "t"}
+        return client
+
+    def test_create_target_sends_required_approval_fields(self):
+        client = self._client()
+        create_target(client, "t", options={})
+        body = client._request.call_args[0][2]
+        for field in self._APPROVAL_FIELDS:
+            assert body[field] is False
+
+    def test_update_target_forwards_approval_flags(self):
+        client = self._client()
+        update_target(client, "t1", "t", require_approval=True)
+        body = client._request.call_args[0][2]
+        assert body["require_approval"] is True
+        assert body["ticket_requests_disabled"] is False
+        assert body["ticket_require_approval"] is False
 
 
 # ---------------------------------------------------------------------------

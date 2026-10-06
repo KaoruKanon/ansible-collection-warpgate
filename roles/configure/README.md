@@ -101,8 +101,8 @@ Warpgate API token. If unset, the role will try to obtain one via user API
 Warpgate global parameters (v0.24+). Only the keys you set are changed;
 the other parameters keep their current server-side value.
 See the warpgate_parameters module documentation for the full key list,
-including the login-protection (v0.26) and banner / web-client /
-session-recording (v0.27) parameters.
+including the login-protection (v0.26), banner / web-client /
+session-recording (v0.27) and MFA / session-approval (v0.29) parameters.
 
 **_Type:_** dict<br />
 
@@ -164,7 +164,9 @@ Optional v0.25+ fields: jump_host / iam_role on ssh_options,
 iam_role on kubernetes_options, protocol_version on postgres_options.
 rdp_options (Warpgate >= 0.27.0): host, port, username, password.
 Optional: domain, tls_security (Tls12/Tls12WithLegacyCiphers/Tls10Unsafe,
-default "Tls12"), verify_tls (default false).
+default "Tls12"), verify_tls (default false). Optional v0.29+ fields:
+compression (remotefx/lossless, default "remotefx"), interactive_logon
+(default false).
 
 **_Type:_** list<br />
 

@@ -39,6 +39,9 @@ class Target:
         allow_roles: list[str] | None = None,
         options: dict[str, Any] | None = None,
         rate_limit_bytes_per_second: int | None = None,
+        require_approval: bool = False,
+        ticket_requests_disabled: bool = False,
+        ticket_require_approval: bool = False,
     ):
         self.id = id
         self.name = name
@@ -47,6 +50,13 @@ class Target:
         self.allow_roles = allow_roles or []
         self.options = options or {}
         self.rate_limit_bytes_per_second = rate_limit_bytes_per_second
+        # Session-gating flags (Warpgate >= 0.29). Tracked here so that an
+        # update triggered by an unrelated field (name, options, ...) can
+        # carry these forward unchanged instead of silently resetting them
+        # to False, since the module does not expose them as parameters.
+        self.require_approval = require_approval
+        self.ticket_requests_disabled = ticket_requests_disabled
+        self.ticket_require_approval = ticket_require_approval
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Target":
@@ -59,7 +69,25 @@ class Target:
             allow_roles=data.get("allow_roles", []),
             options=data.get("options", {}),
             rate_limit_bytes_per_second=data.get("rate_limit_bytes_per_second"),
+            require_approval=bool(data.get("require_approval", False)),
+            ticket_requests_disabled=bool(data.get("ticket_requests_disabled", False)),
+            ticket_require_approval=bool(data.get("ticket_require_approval", False)),
         )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the target for module output"""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "group_id": self.group_id,
+            "allow_roles": list(self.allow_roles),
+            "options": dict(self.options),
+            "rate_limit_bytes_per_second": self.rate_limit_bytes_per_second,
+            "require_approval": self.require_approval,
+            "ticket_requests_disabled": self.ticket_requests_disabled,
+            "ticket_require_approval": self.ticket_require_approval,
+        }
 
 
 def get_targets(client, search: str = "") -> list[Target]:
@@ -108,6 +136,9 @@ def create_target(
     group_id: str = "",
     options: dict[str, Any] | None = None,
     rate_limit_bytes_per_second: int | None = None,
+    require_approval: bool = False,
+    ticket_requests_disabled: bool = False,
+    ticket_require_approval: bool = False,
 ) -> Target:
     """
     Creates a new target in Warpgate with the provided name, description, and configuration options.
@@ -119,6 +150,12 @@ def create_target(
         group_id: Optional target group ID
         options: Target options (SSH, HTTP, MySQL, or PostgreSQL configuration)
         rate_limit_bytes_per_second: Optional upstream bandwidth limit
+        require_approval: Require admin approval before a session connects
+            (Warpgate >= 0.29, required by the API).
+        ticket_requests_disabled: Disable ticket self-service requests for this
+            target (Warpgate >= 0.29, required by the API).
+        ticket_require_approval: Require admin approval for ticket requests to
+            this target (Warpgate >= 0.29, required by the API).
 
     Returns:
         Created Target object
@@ -127,6 +164,9 @@ def create_target(
         "name": name,
         "description": description,
         "options": options or {},
+        "require_approval": require_approval,
+        "ticket_requests_disabled": ticket_requests_disabled,
+        "ticket_require_approval": ticket_require_approval,
     }
     if group_id and group_id.strip():
         body["group_id"] = group_id
@@ -144,6 +184,9 @@ def update_target(
     group_id: str = "",
     options: dict[str, Any] | None = None,
     rate_limit_bytes_per_second: int | None = None,
+    require_approval: bool = False,
+    ticket_requests_disabled: bool = False,
+    ticket_require_approval: bool = False,
 ) -> Target:
     """
     Updates an existing target's information including name, description, and configuration options.
@@ -156,6 +199,12 @@ def update_target(
         group_id: Updated target group ID
         options: Updated target options
         rate_limit_bytes_per_second: Optional upstream bandwidth limit
+        require_approval: Require admin approval before a session connects
+            (Warpgate >= 0.29, required by the API).
+        ticket_requests_disabled: Disable ticket self-service requests for this
+            target (Warpgate >= 0.29, required by the API).
+        ticket_require_approval: Require admin approval for ticket requests to
+            this target (Warpgate >= 0.29, required by the API).
 
     Returns:
         Updated Target object
@@ -164,6 +213,9 @@ def update_target(
         "name": name,
         "description": description,
         "options": options or {},
+        "require_approval": require_approval,
+        "ticket_requests_disabled": ticket_requests_disabled,
+        "ticket_require_approval": ticket_require_approval,
     }
     if group_id and group_id.strip():
         body["group_id"] = group_id
