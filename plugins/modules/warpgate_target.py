@@ -286,7 +286,10 @@ options:
                 choices: ["remotefx", "lossless"]
                 default: "remotefx"
             interactive_logon:
-                description: Request an interactive (as opposed to RemoteApp) logon (Warpgate >= 0.29.0).
+                description:
+                    - Show the target's own sign-in screen instead of logging on automatically
+                      (Warpgate >= 0.29.0).
+                    - The stored credentials still pass network-level authentication (CredSSP).
                 type: bool
                 required: false
                 default: false
