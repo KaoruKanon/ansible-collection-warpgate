@@ -632,10 +632,10 @@ def build_target_options(module):
                 "mode": http_options["tls"]["mode"],
                 "verify": http_options["tls"]["verify"],
             },
+            # Warpgate >= 0.29 rejects HTTP options without a headers map.
+            "headers": http_options.get("headers") or {},
         }
 
-        if http_options.get("headers"):
-            options["headers"] = http_options["headers"]
         if http_options.get("external_host"):
             options["external_host"] = http_options["external_host"]
 

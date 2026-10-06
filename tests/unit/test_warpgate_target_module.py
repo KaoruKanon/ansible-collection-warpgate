@@ -85,6 +85,16 @@ class TestBuildTargetOptions:
         assert opts["headers"] == {"X-Custom": "val"}
         assert opts["external_host"] == "ext.local"
 
+    def test_http_options_without_headers_sends_empty_map(self):
+        mod = self._make_module(
+            http_options={
+                "url": "https://app.local",
+                "tls": {"mode": "Disabled", "verify": False},
+            }
+        )
+        opts = warpgate_target.build_target_options(mod)
+        assert opts["headers"] == {}
+
     def test_mysql_options(self):
         mod = self._make_module(
             mysql_options={
