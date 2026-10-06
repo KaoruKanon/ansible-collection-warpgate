@@ -284,6 +284,9 @@ class TestTarget:
         assert t.description == ""
         assert t.allow_roles == []
         assert t.options == {}
+        assert t.require_approval is False
+        assert t.ticket_requests_disabled is False
+        assert t.ticket_require_approval is False
 
     def test_to_dict_round_trip(self):
         data = {
@@ -294,6 +297,9 @@ class TestTarget:
             "allow_roles": ["r1"],
             "options": {"kind": "Ssh"},
             "rate_limit_bytes_per_second": 2048,
+            "require_approval": True,
+            "ticket_requests_disabled": True,
+            "ticket_require_approval": False,
         }
         assert Target.from_dict(data).to_dict() == data
 

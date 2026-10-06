@@ -243,7 +243,8 @@ options:
                 choices: ["3.0", "3.2"]
     rdp_options:
         description:
-            - Options for an RDP target (Warpgate >= 0.27.0).
+            - Options for an RDP target (Warpgate >= 0.27.0; C(compression) and
+              C(interactive_logon) require Warpgate >= 0.29.0).
         type: dict
         required: false
         suboptions:
@@ -275,6 +276,17 @@ options:
                 default: "Tls12"
             verify_tls:
                 description: Whether to verify the upstream RDP server's TLS certificate.
+                type: bool
+                required: false
+                default: false
+            compression:
+                description: RDP graphics compression codec (Warpgate >= 0.29.0).
+                type: str
+                required: false
+                choices: ["remotefx", "lossless"]
+                default: "remotefx"
+            interactive_logon:
+                description: Request an interactive (as opposed to RemoteApp) logon (Warpgate >= 0.29.0).
                 type: bool
                 required: false
                 default: false
@@ -425,6 +437,8 @@ EXAMPLES = """
       password: "{{ rdp_password }}"
       tls_security: "Tls12"
       verify_tls: false
+      compression: "remotefx"
+      interactive_logon: false
     state: present
 
 - name: Create a Kubernetes target with token auth
@@ -686,6 +700,8 @@ def build_target_options(module):
             "domain": rdp_options.get("domain"),
             "tls_security": rdp_options.get("tls_security", "Tls12"),
             "verify_tls": rdp_options.get("verify_tls", False),
+            "compression": rdp_options.get("compression", "remotefx"),
+            "interactive_logon": rdp_options.get("interactive_logon", False),
         }
 
         return options
@@ -927,6 +943,13 @@ def main():
                     default="Tls12",
                 ),
                 verify_tls=dict(type="bool", required=False, default=False),
+                compression=dict(
+                    type="str",
+                    required=False,
+                    choices=["remotefx", "lossless"],
+                    default="remotefx",
+                ),
+                interactive_logon=dict(type="bool", required=False, default=False),
             ),
         ),
         kubernetes_options=dict(type="dict", required=False),
@@ -1067,6 +1090,13 @@ def main():
                             group_id,
                             target_options,
                             rate_limit_bytes_per_second=rate_limit_bytes_per_second,
+                            # Carry the existing session-gating flags forward:
+                            # the module doesn't expose them as parameters, so
+                            # an update triggered by an unrelated field must not
+                            # silently reset them to False.
+                            require_approval=existing_target.require_approval,
+                            ticket_requests_disabled=existing_target.ticket_requests_disabled,
+                            ticket_require_approval=existing_target.ticket_require_approval,
                         )
                         result["id"] = updated_target.id
                         result["description"] = updated_target.description

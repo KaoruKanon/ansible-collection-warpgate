@@ -164,7 +164,9 @@ Optional v0.25+ fields: jump_host / iam_role on ssh_options,
 iam_role on kubernetes_options, protocol_version on postgres_options.
 rdp_options (Warpgate >= 0.27.0): host, port, username, password.
 Optional: domain, tls_security (Tls12/Tls12WithLegacyCiphers/Tls10Unsafe,
-default "Tls12"), verify_tls (default false).
+default "Tls12"), verify_tls (default false). Optional v0.29+ fields:
+compression (remotefx/lossless, default "remotefx"), interactive_logon
+(default false).
 
 **_Type:_** list<br />
 
