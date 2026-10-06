@@ -141,7 +141,7 @@
     http_options: "{{ warpgate_current_target.http_options | default({}) }}"
     mysql_options: "{{ warpgate_current_target.mysql_options | default({}) }}"
     postgres_options: "{{ warpgate_current_target.postgres_options | default({}) }}"
-    rdp_options: "{{ warpgate_current_target.rdp_options | default({}) }}"
+    rdp_options: "{{ warpgate_current_target.rdp_options | default(omit) }}"
     kubernetes_options: "{{ warpgate_current_target.kubernetes_options | default({}) }}"
     roles: "{{ warpgate_current_target.roles | default([]) }}"
     state: "{{ warpgate_current_target.state | default('present') }}"
