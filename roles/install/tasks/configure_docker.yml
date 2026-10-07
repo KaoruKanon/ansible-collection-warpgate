@@ -79,4 +79,3 @@
     network_mode: "{{ warpgate_docker_network_mode | default(omit, true) }}"
     etc_hosts: "{{ warpgate_docker_extra_hosts if warpgate_docker_extra_hosts | length > 0 else omit }}"
     log_driver: "{{ warpgate_docker_log_driver | default(omit, true) }}"
-  when: not ansible_check_mode

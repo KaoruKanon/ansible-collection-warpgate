@@ -489,8 +489,13 @@ warpgate_docker_image_tag: "{{ warpgate_version }}"
 # @var warpgate_docker_pull
 # @var warpgate_docker_pull:type: boolean
 # @var warpgate_docker_pull:description: >
-# Always re-pull the image, even if a matching tag is already present locally
-warpgate_docker_pull: true
+# Force a re-pull of the image even if a matching tag is already present
+# locally. Defaults to true only for floating tags (latest/main), whose
+# content can change without the tag itself changing; a pinned version
+# tag (e.g. "0.29.1") is treated as immutable and skipped, so --check runs
+# stop reporting "changed" every time just because the image was re-pulled.
+# Override explicitly if you need to always force a pull regardless of tag.
+warpgate_docker_pull: "{{ warpgate_docker_image_tag in ['latest', 'main'] }}"
 
 # @var warpgate_docker_container_name
 # @var warpgate_docker_container_name:type: string
