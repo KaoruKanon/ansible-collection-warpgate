@@ -384,15 +384,19 @@ warpgate_docker_publish_ports: true
 
 ### warpgate_docker_pull
 
-Always re-pull the image, even if a matching tag is already present
-locally
+Force a re-pull of the image even if a matching tag is already present
+locally. Defaults to true only for floating tags (latest/main), whose
+content can change without the tag itself changing; a pinned version
+tag (e.g. "0.29.1") is treated as immutable and skipped, so --check runs
+stop reporting "changed" every time just because the image was re-pulled.
+Override explicitly if you need to always force a pull regardless of tag.
 
 **_Type:_** boolean<br />
 
 #### Default value
 
 ```YAML
-warpgate_docker_pull: true
+warpgate_docker_pull: "{{ warpgate_docker_image_tag in ['latest', 'main'] }}"
 ```
 
 ### warpgate_docker_restart_policy
